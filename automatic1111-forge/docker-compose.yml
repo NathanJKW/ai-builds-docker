@@ -5,10 +5,8 @@ services:
     restart: always
     build:
       context: .
-      args:
     ports:
       - "7861:7860"
-    environment:
     volumes:
       - ./models:/home/aiuser/stable-diffusion-webui/models
     deploy:
