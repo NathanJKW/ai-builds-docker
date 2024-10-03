@@ -25,7 +25,7 @@ USER aiuser
 WORKDIR /home/aiuser/
 
 RUN git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git
-
+VOLUME /home/aiuser/stable-diffusion-webuiforge
 WORKDIR /home/aiuser/stable-diffusion-webui-forge
 COPY ./webui-user.sh /home/aiuser/stable-diffusion-webui-forge/webui-user.sh
 
