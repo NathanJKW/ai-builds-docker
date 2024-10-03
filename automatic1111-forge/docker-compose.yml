@@ -1,5 +1,5 @@
 services:
-  myapp:
+  automatic1111-forge:
     container_name: automatic1111-forge
     image: automatic1111-forge:0.1
     restart: always
