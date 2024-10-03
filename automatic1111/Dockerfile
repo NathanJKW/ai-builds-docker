@@ -2,7 +2,6 @@ FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu20.04 AS python3.10-base
 
 ENV DEBIAN_FRONTEND noninteractive
 
-
 #Add new user
 RUN adduser aiuser
 #Add new group
