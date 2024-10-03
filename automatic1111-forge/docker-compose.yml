@@ -9,9 +9,13 @@ services:
       - "7861:7860"
     volumes:
       - ./models:/home/aiuser/stable-diffusion-webui-forge/models
+      - automatic1111-forge:/home/aiuser/stable-diffusion-webui-forge
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               capabilities: [ gpu ]
+volumes:
+  automatic1111-forge:
+    driver: local
