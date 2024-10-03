@@ -1,0 +1,19 @@
+services:
+  myapp:
+    container_name: automatic1111-forge
+    image: automatic1111-forge:0.1
+    restart: always
+    build:
+      context: .
+      args:
+    ports:
+      - "7861:7860"
+    environment:
+    volumes:
+      - ./models:/home/aiuser/stable-diffusion-webui/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
