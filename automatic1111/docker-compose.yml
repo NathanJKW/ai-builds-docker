@@ -1,0 +1,20 @@
+services:
+  myapp:
+    container_name: myapp
+    image: myapp:0.1
+    restart: always
+    build:
+      context: .
+      args:
+    ports:
+      - "7860:7860"
+    environment:
+    volumes:
+      - ./data:/home/aiuser/stable-diffusion-webui/models
+    mem_limit: "16G"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
