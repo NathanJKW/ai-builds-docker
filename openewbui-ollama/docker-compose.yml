@@ -13,3 +13,8 @@ services:
         reservations:
           devices:
             - capabilities: [gpu]
+volumes:
+  ollama:
+    driver: local
+  open-webui:
+    driver: local
