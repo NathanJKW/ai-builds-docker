@@ -12,7 +12,8 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]
+            - driver: nvidia
+              capabilities: [ gpu ]
 volumes:
   ollama:
     driver: local
