@@ -9,6 +9,7 @@ services:
       - "7861:7860"
     volumes:
       - ./models:/home/aiuser/stable-diffusion-webui-forge/models
+      - ./outputs:/home/aiuser/stable-diffusion-webui-forge/outputs
       - automatic1111-forge:/home/aiuser/stable-diffusion-webui-forge
     deploy:
       resources:
