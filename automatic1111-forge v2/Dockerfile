@@ -76,12 +76,6 @@ RUN echo "python_cmd=\"python$PYTHON_VERSION\"" >> webui-user.sh && \
     echo "export LD_PRELOAD=\"$LD_PRELOAD\"" >> webui-user.sh && \
     echo "export TORCH_COMMAND=\"pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu$PYTORCH_VERSION\"" >> webui-user.sh
 
-#RUN python3 -m venv myenv
-#RUN source venv/bin/activate
-
-#USER root
-#CMD ["bash"]
-
 # Expose port 7860 for the web UI
 EXPOSE 7860
 
