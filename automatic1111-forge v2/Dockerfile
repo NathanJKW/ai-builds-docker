@@ -10,6 +10,7 @@ LABEL maintainer="Your Name <youremail@example.com>" \
 # Define build arguments for versioning and use them to keep the image configurable.
 ARG CUDA_VERSION=12-4
 ARG PYTHON_VERSION=3.11
+ARG PYTORCH_VERSION=124
 
 # Set up environment variables for default configurations
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -53,7 +54,7 @@ RUN groupadd -r aigroup && useradd -r -m -g aigroup aiuser
 
 # Install Python and create a virtual environment
 RUN apt-get update && \
-    apt-get install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv && \
+    apt-get install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -70,9 +71,16 @@ RUN git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git
 WORKDIR /home/aiuser/stable-diffusion-webui-forge
 
 # Modify the `webui-user.sh` script using environment variables for flexibility
-RUN echo "python_cmd=\"$PYTHON_CMD\"" >> webui-user.sh && \
+RUN echo "python_cmd=\"python$PYTHON_VERSION\"" >> webui-user.sh && \
     echo "export COMMANDLINE_ARGS=\"$COMMANDLINE_ARGS\"" >> webui-user.sh && \
-    echo "export LD_PRELOAD=\"$LD_PRELOAD\"" >> webui-user.sh
+    echo "export LD_PRELOAD=\"$LD_PRELOAD\"" >> webui-user.sh && \
+    echo "export TORCH_COMMAND=\"pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu$PYTORCH_VERSION\"" >> webui-user.sh
+
+#RUN python3 -m venv myenv
+#RUN source venv/bin/activate
+
+#USER root
+#CMD ["bash"]
 
 # Expose port 7860 for the web UI
 EXPOSE 7860
