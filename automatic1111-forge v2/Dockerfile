@@ -1,68 +1,84 @@
-# Stage 1: Base Setup
-# -------------------
-# Start from the Debian 12 (Bookworm) slim image, which is a minimal base image
+# Define the base image with metadata labels for maintainability
+# Using Debian 12 (Bookworm) slim image as a minimal base
 FROM debian:bookworm-slim AS base
 
-# Update the package list to ensure we have the latest information on available packages
-RUN apt-get update -y && apt-get upgrade -y
+# Metadata labels
+LABEL maintainer="Your Name <youremail@example.com>" \
+      description="Dockerfile for setting up Stable Diffusion WebUI with CUDA on Debian Slim." \
+      version="1.0"
 
-# Install software-properties-common for managing repositories and wget for downloading files
-RUN apt-get install -y software-properties-common wget
+# Define build arguments for versioning and use them to keep the image configurable.
+ARG CUDA_VERSION=12-4
+ARG PYTHON_VERSION=3.11
 
-# Stage 2: Add NVIDIA Repository
-# ------------------------------
-# Start from the base setup stage to ensure continuity
+# Set up environment variables for default configurations
+ENV DEBIAN_FRONTEND=noninteractive \
+    LD_PRELOAD=libtcmalloc.so \
+    COMMANDLINE_ARGS="--enable-insecure-extension-access --listen --xformers"
+
+# Update, upgrade, and install necessary packages in one RUN command to reduce layers and clean up afterwards
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+        software-properties-common \
+        wget \
+        git \
+        libgoogle-perftools-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Stage to add NVIDIA repository
 FROM base AS nvidia-setup
 
-# Download the CUDA keyring package to add NVIDIA’s package repository
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb
+# Download and install the CUDA keyring package to access the NVIDIA repository securely
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
+    rm -f cuda-keyring_1.1-1_all.deb
 
-# Install the CUDA keyring package to enable secure access to the CUDA repository
-RUN dpkg -i cuda-keyring_1.1-1_all.deb
+# Configure the repository and install CUDA Toolkit
+FROM nvidia-setup AS cuda-install
 
-# Stage 3: Configure Repositories
-# -------------------------------
-# Continue from the NVIDIA setup stage
-FROM nvidia-setup AS repo-setup
+# Add the "contrib" repository, update, and install CUDA in one command to reduce layers
+RUN add-apt-repository contrib && \
+    apt-get update && \
+    apt-get -y install cuda-toolkit-${CUDA_VERSION} && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Add the "contrib" repository, which includes additional software not part of the main Debian distribution
-RUN add-apt-repository contrib
-
-# Update the package list again to include the newly added contrib repository
-RUN apt-get update
-
-# Stage 4: Install CUDA Toolkit
-# -----------------------------
-# Start from the repository configuration stage
-FROM repo-setup AS cuda-install
-
-# Install the specified version of the CUDA toolkit (in this case, CUDA Toolkit 12.4)
-RUN apt-get -y install cuda-toolkit-12-4
-
-# Stage 5: Final Image Setup
-# --------------------------
-# Create the final stage by copying all necessary files from previous stages
+# Final stage for setting up the application and user environment
 FROM cuda-install AS automatic1111-forge
 
-RUN adduser aiuser
-RUN groupadd aigroup
-RUN usermod -aG aigroup aiuser
+# Create a group and user for running the application
+RUN groupadd -r aigroup && useradd -r -m -g aigroup aiuser
 
-RUN apt-get update && apt-get install git python3.11 python3.11-venv -y
+# Install Python and create a virtual environment
+RUN apt-get update && \
+    apt-get install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt install -y libgoogle-perftools-dev
-
+# Switch to the newly created user
 USER aiuser
+
+# Set working directory to user's home directory
 WORKDIR /home/aiuser/
 
+# Clone the required repository into the user's home directory
 RUN git clone https://github.com/lllyasviel/stable-diffusion-webui-forge.git
 
+# Set the working directory to the cloned repository's directory
 WORKDIR /home/aiuser/stable-diffusion-webui-forge
 
-RUN echo "python_cmd=""python3.11""" >> /home/aiuser/stable-diffusion-webui-forge/webui-user.sh && \
-    echo "export COMMANDLINE_ARGS=""$COMMANDLINE_ARGS --enable-insecure-extension-access --listen --xformers""" >> /home/aiuser/stable-diffusion-webui-forge/webui-user.sh && \
-    echo "export LD_PRELOAD=libtcmalloc.so" >> /home/aiuser/stable-diffusion-webui-forge/webui-user.sh
+# Modify the `webui-user.sh` script using environment variables for flexibility
+RUN echo "python_cmd=\"$PYTHON_CMD\"" >> webui-user.sh && \
+    echo "export COMMANDLINE_ARGS=\"$COMMANDLINE_ARGS\"" >> webui-user.sh && \
+    echo "export LD_PRELOAD=\"$LD_PRELOAD\"" >> webui-user.sh
 
+# Expose port 7860 for the web UI
 EXPOSE 7860
 
-ENTRYPOINT [ "./webui.sh" ]
+# Add a health check to ensure the web UI is running
+HEALTHCHECK CMD curl --fail http://localhost:7860 || exit 1
+
+# Set the entrypoint to run the web UI script
+ENTRYPOINT ["./webui.sh"]
