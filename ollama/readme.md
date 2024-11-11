@@ -24,13 +24,27 @@ docker network rm <network_name>
 
 # Run the 'ollama' container
 ```bash
-docker run -d \
+docker run \
   --name ollama \
-  --network openai_network \
-  -p 11434:11434 \
-  -v ".:/app/data" \
-  --gpus all \
+  --network ai \
+  -p 5000:11434 \
+  -v "/home/nathan/Documents/Docker/ollama:/root/.ollama" \
+  --gpus "device=1" \
   ollama/ollama
+
+docker run \
+  --name open-webui \
+  --network ai \
+  -p 5001:8080 \
+  -v "/home/nathan/Documents/Docker/open-webui/webui:/app/backend/data" \
+  ghcr.io/open-webui/open-webui:main
+
+docker run \
+  --name pipelines \
+  --network ai \
+  -p 5002:9099 \
+  -v /home/nathan/Documents/Docker/open-webui/pipelines:/app/pipelines \
+  ghcr.io/open-webui/pipelines:main
 ```
 
 ### **Explanation of Each Line**
