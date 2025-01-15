@@ -2,12 +2,10 @@ services:
   ollama:
     image: ollama/ollama
     container_name: ollama
-    networks:
-      - ai
     ports:
       - "5000:11434"
     volumes:
-      - "/home/nathan/Documents/Docker/ollama:/root/.ollama"
+      - "./storage/ollama:/root/.ollama"
     deploy:
       resources:
         reservations:
@@ -19,23 +17,15 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
-    networks:
-      - ai
     ports:
       - "5001:8080"
     volumes:
-      - "/home/nathan/Documents/Docker/open-webui/webui:/app/backend/data"
+      - "./storage/webui:/app/backend/data"
 
   pipelines:
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines
-    networks:
-      - ai
     ports:
       - "5002:9099"
     volumes:
-      - "/home/nathan/Documents/Docker/open-webui/pipelines:/app/pipelines"
-
-networks:
-  ai:
-    external: true
+      - "./storage/pipelines:/app/pipelines"
